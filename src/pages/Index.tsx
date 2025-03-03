@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Paw, Heart, ArrowRight, Search, Gift } from "lucide-react";
+import { Heart, ArrowRight, Search, Gift } from "lucide-react";
+import { Paw } from "@/components/icons/Paw"; // Updated import
 import AnimalCard from "@/components/animals/AnimalCard";
 import CoinBalance from "@/components/common/CoinBalance";
 import Navbar from "@/components/layout/Navbar";

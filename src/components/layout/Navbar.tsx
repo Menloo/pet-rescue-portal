@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Heart, ShoppingCart, Home, Paw } from "lucide-react";
+import { Menu, X, Heart, ShoppingCart, Home } from "lucide-react";
+import { Paw } from "@/components/icons/Paw"; // Updated import
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";

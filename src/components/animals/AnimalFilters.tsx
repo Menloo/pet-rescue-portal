@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Animal, AnimalType, AnimalSize } from "@/types";
 import { Search, Filter, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Sheet, 
   SheetContent, 
