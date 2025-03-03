@@ -1,38 +1,97 @@
 
+import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import AnimalsPage from "./pages/AnimalsPage";
-import AnimalDetailsPage from "./pages/AnimalDetailsPage";
-import DonatePage from "./pages/DonatePage";
-import StorePage from "./pages/StorePage";
-import AccountPage from "./pages/AccountPage";
+import { Toaster as SonnerToaster } from "sonner";
+import Index from "@/pages/Index";
+import AnimalsPage from "@/pages/AnimalsPage";
+import AnimalDetailsPage from "@/pages/AnimalDetailsPage";
+import DonatePage from "@/pages/DonatePage";
+import StorePage from "@/pages/StorePage";
+import AccountPage from "@/pages/AccountPage";
+import FavoritesPage from "@/pages/FavoritesPage";
+import NotFound from "@/pages/NotFound";
+import PageTransition from "@/components/layout/PageTransition";
 
-const queryClient = new QueryClient();
+function App() {
+  const location = useLocation();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  return (
+    <>
+      <SonnerToaster position="top-right" expand={true} richColors />
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/animals" element={<AnimalsPage />} />
-          <Route path="/animals/:id" element={<AnimalDetailsPage />} />
-          <Route path="/donate" element={<DonatePage />} />
-          <Route path="/store" element={<StorePage />} />
-          <Route path="/account" element={<AccountPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <PageTransition>
+              <Index />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/animals"
+          element={
+            <PageTransition>
+              <AnimalsPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/animals/:id"
+          element={
+            <PageTransition>
+              <AnimalDetailsPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/donate"
+          element={
+            <PageTransition>
+              <DonatePage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/store"
+          element={
+            <PageTransition>
+              <StorePage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <PageTransition>
+              <AccountPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/favorites"
+          element={
+            <PageTransition>
+              <FavoritesPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <PageTransition>
+              <NotFound />
+            </PageTransition>
+          }
+        />
+      </Routes>
+    </>
+  );
+}
 
 export default App;

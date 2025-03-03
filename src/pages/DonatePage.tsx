@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Paw } from "@/components/icons/Paw";
+import ContactForm from "@/components/common/ContactForm";
+
+const shelterCardNumber = "5457 0825 0860 9992";
 
 const DonatePage = () => {
   const [donationAmount, setDonationAmount] = useState<number>(100);
@@ -22,6 +25,12 @@ const DonatePage = () => {
     const saved = localStorage.getItem('userCoins');
     return saved ? parseInt(saved) : 0;
   });
+  
+  // Card payment details
+  const [cardName, setCardName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCVV, setCardCVV] = useState("");
   
   const { toast } = useToast();
 
@@ -53,6 +62,49 @@ const DonatePage = () => {
       return;
     }
     
+    // Validate card details if card payment method is selected
+    if (paymentMethod === "card") {
+      if (!cardName || !cardNumber || !cardExpiry || !cardCVV) {
+        toast({
+          title: "Помилка",
+          description: "Будь ласка, введіть всі дані картки",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Basic validation for card number format
+      const cleanCardNumber = cardNumber.replace(/\s/g, '');
+      if (cleanCardNumber.length !== 16 || !/^\d+$/.test(cleanCardNumber)) {
+        toast({
+          title: "Помилка",
+          description: "Будь ласка, введіть коректний номер картки (16 цифр)",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Basic validation for expiry date format (MM/YY)
+      if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) {
+        toast({
+          title: "Помилка",
+          description: "Будь ласка, введіть термін дії у форматі MM/РР",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Basic validation for CVV
+      if (!/^\d{3}$/.test(cardCVV)) {
+        toast({
+          title: "Помилка",
+          description: "Будь ласка, введіть коректний CVV код (3 цифри)",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     setIsProcessing(true);
     
     // Simulate API call
@@ -64,13 +116,40 @@ const DonatePage = () => {
       localStorage.setItem('userCoins', newCoins.toString());
       setUserCoins(newCoins);
       
+      // Save donation history
+      const donations = JSON.parse(localStorage.getItem('donations') || '[]');
+      donations.push({
+        id: `donation-${Date.now()}`,
+        amount: donationAmount,
+        date: new Date().toISOString(),
+        paymentMethod: paymentMethod,
+        coinsAwarded: coinsToAdd
+      });
+      localStorage.setItem('donations', JSON.stringify(donations));
+      
       setIsProcessing(false);
+      
+      // Reset form
+      if (paymentMethod === "card") {
+        setCardName("");
+        setCardNumber("");
+        setCardExpiry("");
+        setCardCVV("");
+      }
       
       toast({
         title: "Дякуємо за вашу пожертву!",
-        description: `Ви отримали ${coinsToAdd} рятувальних монет.`,
+        description: `Ви пожертвували ${donationAmount} грн та отримали ${coinsToAdd} рятувальних монет.`,
       });
     }, 1500);
+  };
+
+  const copyCardNumber = () => {
+    navigator.clipboard.writeText(shelterCardNumber.replace(/\s/g, ''));
+    toast({
+      title: "Скопійовано",
+      description: "Номер картки скопійовано в буфер обміну",
+    });
   };
 
   return (
@@ -161,20 +240,40 @@ const DonatePage = () => {
                           <TabsContent value="card" className="space-y-4 pt-4">
                             <div className="space-y-2">
                               <Label htmlFor="cardName">Ім'я власника картки</Label>
-                              <Input id="cardName" placeholder="Ім'я на картці" />
+                              <Input 
+                                id="cardName" 
+                                placeholder="Ім'я на картці" 
+                                value={cardName}
+                                onChange={(e) => setCardName(e.target.value)}
+                              />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="cardNumber">Номер картки</Label>
-                              <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
+                              <Input 
+                                id="cardNumber" 
+                                placeholder="1234 5678 9012 3456" 
+                                value={cardNumber}
+                                onChange={(e) => setCardNumber(e.target.value)}
+                              />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
                                 <Label htmlFor="expiry">Термін дії</Label>
-                                <Input id="expiry" placeholder="MM/РР" />
+                                <Input 
+                                  id="expiry" 
+                                  placeholder="MM/РР" 
+                                  value={cardExpiry}
+                                  onChange={(e) => setCardExpiry(e.target.value)}
+                                />
                               </div>
                               <div className="space-y-2">
                                 <Label htmlFor="cvv">CVV</Label>
-                                <Input id="cvv" placeholder="123" />
+                                <Input 
+                                  id="cvv" 
+                                  placeholder="123" 
+                                  value={cardCVV}
+                                  onChange={(e) => setCardCVV(e.target.value)}
+                                />
                               </div>
                             </div>
                           </TabsContent>
@@ -182,7 +281,17 @@ const DonatePage = () => {
                             <div className="bg-muted p-4 rounded-lg space-y-2">
                               <p className="font-medium">Реквізити для переказу:</p>
                               <p>Притулок для тварин "Лапки"</p>
-                              <p>IBAN: UA123456789012345678901234567</p>
+                              <div className="flex items-center gap-2">
+                                <p>Номер картки: {shelterCardNumber}</p>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 px-2"
+                                  onClick={copyCardNumber}
+                                >
+                                  Копіювати
+                                </Button>
+                              </div>
                               <p>ЄДРПОУ: 12345678</p>
                               <p className="text-sm text-muted-foreground mt-2">
                                 Після переказу, будь ласка, надішліть скріншот квитанції на email: 
@@ -328,6 +437,12 @@ const DonatePage = () => {
                     </Button>
                   </CardContent>
                 </Card>
+              </div>
+              
+              <div>
+                <Badge variant="outline" className="mb-2">Зв'язатися з нами</Badge>
+                <h2 className="text-2xl font-bold mb-4">Потрібна додаткова інформація?</h2>
+                <ContactForm />
               </div>
             </div>
           </div>

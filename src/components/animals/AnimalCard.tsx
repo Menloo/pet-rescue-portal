@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, Info } from "lucide-react";
 import { Animal } from "@/types";
@@ -15,6 +15,14 @@ interface AnimalCardProps {
 const AnimalCard = ({ animal }: AnimalCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  
+  // Check if animal is in favorites on component mount
+  useEffect(() => {
+    const favorites = JSON.parse(localStorage.getItem('animalFavorites') || '[]');
+    if (favorites.includes(animal.id)) {
+      setIsLiked(true);
+    }
+  }, [animal.id]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -45,12 +53,23 @@ const AnimalCard = ({ animal }: AnimalCardProps) => {
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Toggle liked state
     setIsLiked(!isLiked);
     
-    if (!isLiked) {
-      toast.success(`${animal.name} додано до улюблених`);
-    } else {
+    // Update localStorage
+    const favorites = JSON.parse(localStorage.getItem('animalFavorites') || '[]');
+    
+    if (isLiked) {
+      // Remove from favorites
+      const updatedFavorites = favorites.filter((id: string) => id !== animal.id);
+      localStorage.setItem('animalFavorites', JSON.stringify(updatedFavorites));
       toast.info(`${animal.name} видалено з улюблених`);
+    } else {
+      // Add to favorites
+      favorites.push(animal.id);
+      localStorage.setItem('animalFavorites', JSON.stringify(favorites));
+      toast.success(`${animal.name} додано до улюблених`);
     }
   };
 

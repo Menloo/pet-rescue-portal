@@ -1,7 +1,7 @@
 
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Heart, ArrowLeft, Clock, Gift } from "lucide-react";
+import { Heart, ArrowLeft, Clock, Gift, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,17 +9,29 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { Separator } from "@/components/ui/separator";
 import { Paw } from "@/components/icons/Paw";
 import { useToast } from "@/components/ui/use-toast";
-import { Animal } from "@/types";
+import { Animal, AdoptionFormData } from "@/types";
 import { animals } from "@/data/animals";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CoinBalance from "@/components/common/CoinBalance";
+import AdoptionForm from "@/components/animals/AdoptionForm";
+import ContactForm from "@/components/common/ContactForm";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
 
 const AnimalDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const [animal, setAnimal] = useState<Animal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userCoins, setUserCoins] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isDonateDialogOpen, setIsDonateDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,32 +43,78 @@ const AnimalDetailsPage = () => {
       setAnimal(foundAnimal || null);
       setIsLoading(false);
       
-      // Simulate loading user coin balance
+      // Load user coin balance
       const savedCoins = localStorage.getItem('userCoins');
       setUserCoins(savedCoins ? parseInt(savedCoins) : 0);
+      
+      // Check if animal is in favorites
+      const favorites = JSON.parse(localStorage.getItem('animalFavorites') || '[]');
+      if (foundAnimal && favorites.includes(foundAnimal.id)) {
+        setIsLiked(true);
+      }
     }, 500);
   }, [id]);
 
-  const handleAdopt = () => {
-    if (!animal) return;
-    
-    toast({
-      title: "Заявка надіслана!",
-      description: `Ми зв'яжемося з вами щодо усиновлення ${animal.name}`,
-    });
-  };
-
-  const handleDonate = () => {
-    // In a real app, this would open a payment modal
-    // For simulation, we'll just add coins
-    const newCoins = userCoins + 100;
+  const handleDonate = (amount: number) => {
+    // Add coins to user account
+    const newCoins = userCoins + amount;
     localStorage.setItem('userCoins', newCoins.toString());
     setUserCoins(newCoins);
     
+    // Save donation to history
+    if (animal) {
+      const donations = JSON.parse(localStorage.getItem('donations') || '[]');
+      donations.push({
+        id: `donation-${Date.now()}`,
+        amount: amount,
+        date: new Date().toISOString(),
+        animalId: animal.id,
+        animalName: animal.name
+      });
+      localStorage.setItem('donations', JSON.stringify(donations));
+    }
+    
     toast({
       title: "Дякуємо за вашу допомогу!",
-      description: "Ви отримали 100 рятувальних монет.",
+      description: `Ви отримали ${amount} рятувальних монет.`,
     });
+    
+    setIsDonateDialogOpen(false);
+  };
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!animal) return;
+    
+    // Toggle favorite status
+    setIsLiked(!isLiked);
+    
+    // Update localStorage
+    const favorites = JSON.parse(localStorage.getItem('animalFavorites') || '[]');
+    
+    if (isLiked) {
+      // Remove from favorites
+      const updatedFavorites = favorites.filter((favId: string) => favId !== animal.id);
+      localStorage.setItem('animalFavorites', JSON.stringify(updatedFavorites));
+      toast({
+        title: "Видалено з улюблених",
+        description: `${animal.name} видалено зі списку улюблених`,
+      });
+    } else {
+      // Add to favorites
+      favorites.push(animal.id);
+      localStorage.setItem('animalFavorites', JSON.stringify(favorites));
+      toast({
+        title: "Додано до улюблених",
+        description: `${animal.name} додано до списку улюблених`,
+      });
+    }
+  };
+
+  const handleAdoptionSubmit = (data: AdoptionFormData) => {
+    console.log("Adoption form submitted:", data);
+    // In a real app, this would make an API call to process the adoption request
   };
 
   if (isLoading) {
@@ -134,6 +192,18 @@ const AnimalDetailsPage = () => {
                   />
                 </div>
               )}
+              
+              <div className="flex justify-center mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={handleToggleFavorite}
+                >
+                  <Heart className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+                  {isLiked ? "В улюблених" : "Додати до улюблених"}
+                </Button>
+              </div>
             </div>
             
             {/* Animal Details */}
@@ -224,18 +294,83 @@ const AnimalDetailsPage = () => {
               )}
               
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                <Button className="flex-1" onClick={handleAdopt}>
-                  Усиновити {animal.name}
+                <AdoptionForm animal={animal} onAdoptionSubmit={handleAdoptionSubmit} />
+                
+                <Dialog open={isDonateDialogOpen} onOpenChange={setIsDonateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex-1 gap-2">
+                      <Heart className="h-4 w-4" />
+                      Допомогти {animal.name}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Допомогти {animal.name}</DialogTitle>
+                      <DialogDescription>
+                        Ваша допомога буде використана для догляду, лікування та харчування {animal.name}.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4 py-4">
+                      <Button 
+                        onClick={() => handleDonate(50)}
+                        className="flex flex-col items-center p-4 h-auto gap-2"
+                      >
+                        <span className="text-2xl font-bold">50</span>
+                        <span className="text-xs">монет</span>
+                      </Button>
+                      <Button 
+                        onClick={() => handleDonate(100)}
+                        className="flex flex-col items-center p-4 h-auto gap-2"
+                      >
+                        <span className="text-2xl font-bold">100</span>
+                        <span className="text-xs">монет</span>
+                      </Button>
+                      <Button 
+                        onClick={() => handleDonate(200)}
+                        variant="outline"
+                        className="flex flex-col items-center p-4 h-auto gap-2"
+                      >
+                        <span className="text-2xl font-bold">200</span>
+                        <span className="text-xs">монет</span>
+                      </Button>
+                      <Button 
+                        onClick={() => handleDonate(500)}
+                        variant="outline"
+                        className="flex flex-col items-center p-4 h-auto gap-2"
+                      >
+                        <span className="text-2xl font-bold">500</span>
+                        <span className="text-xs">монет</span>
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <Button variant="ghost" size="sm" className="gap-2" asChild>
+                  <a href="tel:+380501234567">
+                    <Phone className="h-4 w-4" />
+                    Зателефонувати
+                  </a>
                 </Button>
-                <Button variant="outline" className="flex-1 gap-2" onClick={handleDonate}>
-                  <Heart className="h-4 w-4" />
-                  Допомогти {animal.name}
+                <Button variant="ghost" size="sm" className="gap-2" asChild>
+                  <a href="mailto:adopt@pritulok.ua?subject=Питання про усиновлення - {animal.name}">
+                    <Mail className="h-4 w-4" />
+                    Написати email
+                  </a>
                 </Button>
               </div>
             </div>
           </div>
           
-          {/* Similar Animals Section would go here */}
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold mb-6">Маєте запитання щодо усиновлення?</h2>
+            <ContactForm 
+              title="Зв'яжіться з нами щодо усиновлення"
+              description={`Якщо у вас є запитання щодо усиновлення ${animal.name} або процесу усиновлення взагалі, заповніть форму нижче.`}
+              submitButtonText="Надіслати запит на усиновлення"
+            />
+          </div>
         </div>
       </main>
       

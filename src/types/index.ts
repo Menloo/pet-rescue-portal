@@ -47,3 +47,29 @@ export interface User {
     price: number;
   }[];
 }
+
+export interface ContactFormData {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+}
+
+export interface DonationData {
+  amount: number;
+  paymentMethod: string;
+  cardNumber?: string;
+  cardName?: string;
+  cardExpiry?: string;
+  cardCVV?: string;
+}
+
+export interface AdoptionFormData {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  reason: string;
+  hasPets: boolean;
+  experience: string;
+}
