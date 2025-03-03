@@ -30,6 +30,7 @@ export interface StoreItem {
   imageUrl: string;
   category: 'food' | 'toys' | 'accessories' | 'experience';
   inStock: boolean;
+  popularity?: number; // Adding the optional popularity field
 }
 
 export interface User {

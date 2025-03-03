@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ShoppingCart, Info } from "lucide-react";
 import { StoreItem } from "@/types";
@@ -18,9 +17,10 @@ import { cn } from "@/lib/utils";
 interface StoreItemCardProps {
   item: StoreItem;
   userCoins?: number;
+  onPurchase?: () => void;
 }
 
-const StoreItemCard = ({ item, userCoins = 0 }: StoreItemCardProps) => {
+const StoreItemCard = ({ item, userCoins = 0, onPurchase }: StoreItemCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const getCategoryLabel = (category: string) => {
@@ -49,7 +49,11 @@ const StoreItemCard = ({ item, userCoins = 0 }: StoreItemCardProps) => {
       return;
     }
 
-    toast.success(`${item.name} додано до кошика`);
+    if (onPurchase) {
+      onPurchase();
+    } else {
+      toast.success(`${item.name} додано до кошика`);
+    }
   };
 
   return (
